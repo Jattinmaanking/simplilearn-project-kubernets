@@ -1,0 +1,534 @@
+# **Deploy the Application Using the Kubernetes Dashboard**
+
+
+## **Course-end Project 1**
+## Description
+## Objectives
+## To deploy a multi-tier PHP and MySQL application using Kubernetes with specific configurations for user roles, storage, service verification, namespace restrictions, quota limits, and data management.
+## Problem Statement and Motivation
+## **Real-Time Scenario:**
+
+## Karen is a DevOps engineer at a tech startup. Her team has developed a new application using PHP and MySQL. Now, it is her task to deploy that application.
+## The company plans to utilize Kubernetes for its robust container orchestration capabilities.
+## Karen must create a Kubernetes dashboard with specific configurations, user roles, storage, service verification, and data management.
+## Industry Relevance :
+
+## The following tools utilized in this project are widely applied in the industry:
+## 1. kubeadm: A utility that offers kubeadm init and kubeadm join as efficient ways to bootstrap Kubernetes clusters. It focuses on bootstrapping rather than machine provisioning.
+## 2. kubectl: A command-line interface for Kubernetes that allows execution of commands against Kubernetes clusters. It can be used for deploying applications, managing cluster resources, and viewing logs.
+## 3. kubelet: An essential node agent present on every node in a Kubernetes cluster. It ensures that the containers described in the provided PodSpecs are running and healthy.
+## 4. Docker: Docker is a tool designed to facilitate developers in building, sharing, and running applications in containers. It takes care of the setup, allowing developers to concentrate on the code.
+
+# **Tasks**
+
+## **The following tasks outline the application using Kubernetes:**
+
+## 1. Getting started with pods, services, and deployments
+## 2. Creating and verifying the service
+## 3. Creating a token and working on a dashboard
+## 4. Configure the NFS-server for MySQL and WordPress deployment
+## 5. Setting up the NFS client side
+## 6. Creating and verifying the PV
+## 7. Creating a secret for MySQL deployments secret data
+## 8. Creating a configmap for WordPress deployment to store non-sensitive information
+
+## Task 1: created a YAML manifests for the application's pods, services, and deployments. 
+
+## Pod Manifest (php-app-pod.yaml):
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: php-app
+spec:
+  containers:
+  - name: php-app-container
+    image: jatinmaan29/phy-test
+    ports:
+    - containerPort: 80
+```
+
+## Service Manifest (php-app-service.yaml):
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-app-service
+spec:
+  selector:
+    app: php-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+
+## Deployment Manifest (mysql-deployment.yaml):
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql-container
+        image: mysql:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: your-root-password
+        ports:
+        - containerPort: 3306
+```
+
+## Deployment Command:
+
+```
+kubectl apply -f php-app-pod.yaml
+kubectl apply -f php-app-service.yaml
+kubectl apply -f mysql-deployment.yaml
+```
+screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/php-app-service-1.PNG
+https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/php-pod-2.PNG
+https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/my-sql-3.PNG
+
+https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/creation-3.PNG
+
+## Task 2:  Verified the services
+
+## kubectl get svc php-app-service
+
+screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/php-app-service-running-confirmation-4.PNG
+
+
+## Task 3: created a service account and generated a token for accessing the Kubernetes dasshboard:
+
+## Step1: Implement the dashboard deployment
+
+## **kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml**
+
+
+## Step 2: Validate the pod, service, and deployment creation
+## Used the Following commands to verify if the pods, services, and deployments have been created:
+
+## kubectl get pods -n kubernetes-dashboard -o wide
+## kubectl get deployment -n kubernetes-dashboard -o wide
+## kubectl get svc -n kubernetes-dashboard -o wide
+
+
+## 2.1  To access the service outside the cluster, edit the service type from ClusterIP to NodePort using the following command:
+
+## kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard
+
+```
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"k8s-app":"kubernetes-dashboard"},"name":"kubernetes-dashboard","namespace":"kubernetes-dashboard"},"spec":{"ports":[{"port":443,"targetPort":8443}],"selector":{"k8s-app":"kubernetes-dashboard"}}}
+  creationTimestamp: "2024-02-15T15:59:45Z"
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  resourceVersion: "288156"
+  uid: fbdf86cc-43b6-471f-a293-80db57379c7c
+spec:
+  clusterIP: 10.99.33.112
+  clusterIPs:
+  - 10.99.33.112
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+```
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/acess-outside-5.PNG
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/to-confire-the-change-6.PNG
+
+## 2.2 To confirm that the service type has been changed to NodePort, use the command:
+## kubectl get svc -n kubernetes-dashboard -o wide
+
+
+## 2.3 To determine the location of the pod, run the following commands:
+## kubectl get pods -n kubernetes-dashboard -o wide
+## kubectl get svc -n kubernetes-dashboard -o wide
+## kubectl get nodes -o wide
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/location-of-pods-7.PNG
+## The Pod is Running on node-1 ip 172.31.5.139
+
+## 2.4 Use the INTERNAL-IP as 172.31.5.139, and PORT(S) as 31063, and copy the link:
+## **https://172.31.5.139:31063**
+
+## Step 3: Access the master node IP
+
+![Screenshot  https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/login-dashboard-8.PNG
+
+## Step 4: Log into the service dashboard
+## 4.1 Created a service account by running the following command, and then input the code in the master node:
+## **vi ServiceAccount.yaml**
+
+```
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+name: admin-user
+namespace: kubernetes-dashboard
+```
+## 4.2 Applied the YAML file with the command:
+## kubectl apply -f ServiceAccount.yaml
+
+![Screenshot
+
+## 4.3 Create a yaml file for cluster role binding using below command and code:
+## **vi ClusterRoleBinding.yaml**
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+name: admin-user
+roleRef:
+apiGroup: rbac.authorization.k8s.io
+kind: ClusterRole
+name: cluster-admin
+subjects:
+- kind: ServiceAccount
+name: admin-user
+namespace: kubernetes-dashboard
+```
+
+## 4.4 Run the below command to create cluster role binding:
+## **kubectl apply -f ClusterRoleBinding.yaml**
+
+## 4.5 Retrieve the token to log in by running the following command:
+## kubectl -n kubernetes-dashboard create token admin-user
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/tokern-9.PNG
+
+## 4.6 Copied the token and paste it into the Kubernetes dashboard login screen, then click Sign in
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/dashboard.10.PNG
+
+## Task 4: Configured the NFS-server for MySQL and WordPress deployment
+## 4.1 Configure the NFS kernel server
+## Created a directory on the worker-node-1 using the following command:
+## **sudo mkdir /mydbdata**
+## 4.2 Install the NFS kernel server on the machine:
+## sudo apt install nfs-kernel-server
+
+![Screenshot  https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/nfs-11.PNG
+## 4.3 Set the permissions
+## To grant permission to access the host server machine, open the exports file in the /etc directory:
+## sudo nano /etc/exports
+## Inside the file, append the following code:
+## /mydbdata 	*(rw,sync,no_root_squash)
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/append-code-12.PNG
+
+## 4.4 export all shared directories defined in the /etc/exports file, use:
+## **sudo exportfs -rv**
+
+## 4.5	Made the folder publicly accessible by changing its owner user and group:
+## sudo chown nobody:nogroup /mydbdata/
+
+## 4.6	Assigned full permissions to ensure everyone can read, write, and execute files in this directory:
+## sudo chmod 777 /mydbdata/
+
+## 4.7	Restarted the NFS kernel server to apply the changes:
+
+## sudo systemctl restart nfs-kernel-server
+
+![Screenshot  https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/changes-permission-13.PNG
+
+## 4.8	Retrieved the internal IP of the node where NFS Server is installed, which will be used to link the PV
+
+
+
+## The Ip 172.31.27.25 used to associate the PV with the NFS server
+
+## Task 5: Configured the NFS common on client machines
+## This action was performed on each worker node
+
+## Run the following command to install the NFS common package:
+## **sudo apt install nfs-common**
+
+![Screenshot 
+
+## Refreshed the NFS common service and verify its current status:
+
+## sudo rm /lib/systemd/system/nfs-common.service
+## sudo systemctl daemon-reload
+
+## sudo systemctl restart nfs-common
+## sudo systemctl status nfs-common
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/changes-permission-13.PNG
+
+## Task 6: Created the PersistentVolume
+
+ ## On the master node, drafted the following YAML for the PV and save it as pv.yaml:
+
+## vi pv.yaml
+```
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: test
+  labels:
+    app: wordpress
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: 172.31.27.25
+    path: "/mydbdata"
+```
+
+## **kubectl apply -f pv.yaml**
+
+## **kubectl get pv**
+
+
+## 6.1: Created the PersistentVolumeClaim
+
+## vi pvc.yaml
+```
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc1
+  labels:
+    app: wordpress
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 6Gi
+```
+
+![Screenshot  https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/pvc-15.PNG
+
+
+## Task 7: Created a secret for MySQL deployments secret data
+
+## Created a YAML manifest file for the secret:
+
+## mysql-secret.yaml:
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: base64-encoded-password
+```
+## Replaced base64-encoded-password with the Base64 encoded version of the MySQL root password. generated the Base64 encoded value of the password using the following command:
+
+## **echo -n 'your-password' | base64**
+
+## Applied the YAML manifest to create the secret
+
+## kubectl apply -f mysql-secret.yaml
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/password-16.PNG
+
+## Task 8: Created a configmap for WordPress deployment to store non-sensitive information
+
+## Created a YAML Manifest File:
+## Create a YAML file named wordpress-configmap.yaml and add the following content:
+## Generated a password for the wordpress
+
+ ## openssl rand -base64 12
+
+## vi wordpress-configmap.yaml
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-configmap
+data:
+  WORDPRESS_DB_HOST: mysql-service
+  WORDPRESS_DB_NAME: wordpress-db
+  WORDPRESS_DB_USER: wordpress-user
+  WORDPRESS_DB_PASSWORD: your-password
+```
+
+## Replaced your-password with the Generated Password
+
+## Applied the Yaml Manifest to create the ConfigMap
+## kubectl apply -f wordpress-configmap.yaml
+
+![Screenshot  https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/config-created-17.PNG
+ ## Created Deployment for WordPress
+
+## wordpress.yaml 
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: wordpress
+  name: wordpress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: wordpress
+    spec:
+      containers:
+      - image: wordpress
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: mysql
+        - name: WORDPRESS_DB_PASSWORD
+          value: simplilearn
+        - name: WORDPRESS_DB_USER
+          value: root
+        - name: WORDPRESS_DB_NAME
+          value: database1
+        resources: {}
+status: {}
+```
+## kubectl create -f wordpress.yaml
+
+## Created a Deployment for mysql
+## vi mysql.yaml
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: mysql
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: simplilearn
+        - name: MYSQL_DATABASE
+          value: database1
+        resources: {}
+status: {}
+```
+## Kubectl get pods
+## kubectl get deployments
+
+## Exposed Service for WordPress and MySQL Deployment
+## To expose Service for WordPress and MySQL Deployment, run the following commands:
+## kubectl expose deployment mysql --port=3306
+## kubectl expose deployment wordpress --port=80
+
+![Screenshot 
+## Change the Service type for both MySQL and WordPress from ClusterIP to Nodeport.
+
+## kubectl edit svc mysql
+
+
+## kubectl edit svc wordpress  
+
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/e41f196c2325f7cd4e166222523690a2ddd9fd31/old-get-services-18.PNG
+![Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/deployment-exposed-18.PNG
+
+## kubectl get svc
+## kubectl get pods -o wide
+## kubectl get nodes -o wide
+
+![Screenshot 
+## Verified the Deployment of application
+## Pasted worker-node-1 ip and the Nodeportof the wordpress: 172.31.27.25:30678 onto a browser using the kubernetes desktop mode
+
+## Installed my Mysql-server
+## sudo apt-get install mysql-server
+## Start my mysl-server
+## sudo systemctl start mysql
+
+Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/confirmation-.PNG
+Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/install-wordpress.PNG
+Screenshot https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/6416b0be2a3e6b142585c3740f41ba78e897adac/login.PNG
+
+https://github.com/Jattinmaanking/simplilearn-project-kubernets/blob/3f17b89e4b7213213763905c21e430e360aa7097/wordpress.PNG
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
